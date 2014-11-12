@@ -320,9 +320,10 @@ public class SyncIngestServiceImpl implements SyncIngestService {
         }
 		finally {
         	syncService.updateSyncImportRecord(importRecord);
-        	
+
         	//reset the flush mode back to automatic, no matter what
         	syncService.setFlushModeAutomatic();
+            Context.clearSession(); // so that objects aren't re-saved at next flush
         }
         //for hibernate SYNC-175
         server = null;

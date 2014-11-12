@@ -499,6 +499,21 @@ public class SyncUtilTransmission {
 				catch (SyncIngestException e) {
 					log.error("Sync error while ingesting records for server: " + origin.getNickname(), e);
 					importRecord = e.getSyncImportRecord();
+                    SyncImportRecord syncImportRecord = syncService.getSyncImportRecord(record.getOriginalUuid());
+                    if (syncImportRecord == null) {
+                        //if the sync record has not been saved to the database yet
+                        syncImportRecord = new SyncImportRecord(record);
+                        syncImportRecord.setState(importRecord.getState());
+                        syncImportRecord.setUuid(record.getOriginalUuid());
+                        syncImportRecord.setSourceServer(importRecord.getSourceServer());
+                        syncImportRecord.setErrorMessage(importRecord.getErrorMessage());
+                        syncService.createSyncImportRecord(syncImportRecord);
+
+                    } else {
+                        syncImportRecord.setState(importRecord.getState());
+                        syncImportRecord.setErrorMessage(importRecord.getErrorMessage());
+                        syncService.updateSyncImportRecord(syncImportRecord);
+                    }
 				}
 				catch (Exception e) {
 					//just report error, import record already set to failed
@@ -506,7 +521,9 @@ public class SyncUtilTransmission {
 					if (importRecord != null)
 						importRecord.setErrorMessage(e.getMessage());
 				}
-				importRecords.add(importRecord);
+
+                importRecords.add(importRecord);
+
 				
 				//if the record update failed for any reason, do not continue on, stop now
 				//adding NOT_SUPPOSED_TO_SYNC: SYNC-204.
